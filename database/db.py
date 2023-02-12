@@ -1,0 +1,1 @@
+data: dict[int, dict[int, list[int | None]]] = {}
