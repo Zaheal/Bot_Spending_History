@@ -4,7 +4,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 
 from configs import load_config, Config
-from handlers import register_user_handlers, register_admin_handlers
+from handlers import register_user_handlers
 
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,6 @@ logger = logging.getLogger(__name__)
 
 def register_all_handlers(dp: Dispatcher):
     register_user_handlers(dp)
-    register_admin_handlers(dp)
 
 
 async def main():
