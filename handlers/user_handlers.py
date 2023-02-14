@@ -8,7 +8,7 @@ from aiogram.utils.exceptions import MessageNotModified
 
 from keyboards import create_spending_menu_kb
 from lexicon import RU_LEXICON
-from database import create_sp_history_db, check_user_in_db, add_user_in_db, add_wallet_in_db, update_wallet
+from database import create_sp_history_db, check_user_in_db, add_user_in_db, add_wallet_in_db, update_wallet, check_wallet_in_db
 
 
 async def process_start_command(message: Message):
@@ -32,16 +32,19 @@ async def process_create_user_command(message: Message):
 async def process_create_spending(message: Message):
     year = datetime.now().year
     tg_id = message.from_user.id
-    add_wallet_in_db(tg_id=tg_id, year=year)
-    await message.answer(RU_LEXICON['/create_spending'])
+    if check_wallet_in_db(tg_id=tg_id, year=year):
+        add_wallet_in_db(tg_id, year)
+        await message.answer(RU_LEXICON['/create_spending'])
+    else:
+        await message.answer(RU_LEXICON['not_user'])
     # добавить FMS
 
 
 async def add_spending(message: Message):
     tg_id = message.from_user.id
-    if check_user_in_db(tg_id):
-        date = datetime.now()
-        year = date.year
+    date = datetime.now()
+    year = date.year
+    if check_user_in_db(tg_id) and check_wallet_in_db(tg_id, year):
         month = calendar.month_name[date.month].lower()
         spent_money = int(message.text)
 
@@ -51,11 +54,11 @@ async def add_spending(message: Message):
         await message.answer(RU_LEXICON['not_user'])
             
 
-# async def process_spending_menu(message: Message):
-#     if message.from_user.id in data:
-#         await message.answer('За какой период вы хотите посмотреть свои расходы?', reply_markup=create_spending_menu_kb())
-#     else:
-#         await message.answer(RU_LEXICON['not_user'])
+async def process_spending_menu(message: Message):
+    if check_user_in_db(tg_id=message.from_user.id) and check_wallet_in_db(tg_id=message.from_user.id, year=datetime.now().year):
+        await message.answer('За какой период вы хотите посмотреть свои расходы?', reply_markup=create_spending_menu_kb())
+    else:
+        await message.answer(RU_LEXICON['not_user'])
 
 
 # async def process_year_press(callback: CallbackQuery):
@@ -76,7 +79,7 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(process_create_user_command, Command(commands=['create_user']))
     dp.register_message_handler(process_create_spending, Command(commands=['create_spending']))
     dp.register_message_handler(add_spending, lambda message: message.text.isdigit())
-    # dp.register_message_handler(process_spending_menu, Command(commands=['spending_menu']))
+    dp.register_message_handler(process_spending_menu, Command(commands=['spending_menu']))
     # dp.register_callback_query_handler(process_year_press, Text(equals='year'))
     # dp.register_callback_query_handler(process_month_press, Text(equals='month'))
     

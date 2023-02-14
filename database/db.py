@@ -77,14 +77,33 @@ def add_user_in_db(tg_id: int):
             db.close()
 
 
-def add_wallet_in_db(tg_id: int, year: int):
+def check_wallet_in_db(tg_id: int, year: int):
     try:
         db = sqlite3.connect(r"database/spending_history.db")
         cur = db.cursor()
 
         cur.execute("SELECT lust FROM wallets WHERE user_tg_id=? AND year=?", (tg_id, year))
         if cur.fetchone() is None:    
-            cur.execute("INSERT INTO wallets (year, user_tg_id) VALUES (?, ?)", (year, tg_id))
+            db.close()
+            return False
+        else:
+            db.close()
+            return True
+
+
+    except sqlite3.Error as er:
+        print('Ошибка в check_wallet_in_db', er)
+    finally:
+        if db:
+            db.close()
+
+
+def add_wallet_in_db(tg_id: int, year: int):
+    try:
+        db = sqlite3.connect(r"database/spending_history.db")
+        cur = db.cursor()
+
+        cur.execute("INSERT INTO wallets (year, user_tg_id) VALUES (?, ?)", (year, tg_id))
 
         db.commit()
         db.close()
@@ -94,12 +113,13 @@ def add_wallet_in_db(tg_id: int, year: int):
         if db:
             db.close()
 
+
 def update_wallet(tg_id: int, year: int, month: str, spent_money: int):
     try:
         db = sqlite3.connect(r"database/spending_history.db")
         cur = db.cursor()
 
-        cur.execute(f"UPDATE wallets SET {month}=?, lust=? WHERE user_tg_id=? AND year=?", (spent_money, spent_money, tg_id, year))
+        cur.execute(f"UPDATE wallets SET {month}={month}+?, lust=? WHERE user_tg_id=? AND year=?", (spent_money, spent_money, tg_id, year))
 
         db.commit()
         db.close()
@@ -108,3 +128,5 @@ def update_wallet(tg_id: int, year: int, month: str, spent_money: int):
     finally:
         if db:
             db.close()
+
+
