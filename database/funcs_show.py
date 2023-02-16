@@ -49,3 +49,18 @@ def show_year_spending(tg_id: int, year: int) -> int:
     finally:
         if db:
             db.close()
+
+
+def show_day_spending(tg_id: int, year: int, month: str, day: int) -> tuple:
+    try:
+        db = sqlite3.connect(r"database/spending_history.db")
+        cur = db.cursor()
+
+        cost_with_desc = cur.execute("SELECT cost, description FROM descriptions WHERE year=? AND month=? AND day=? AND user_tg_id=?", (year, month, day, tg_id)).fetchall()
+
+        return cost_with_desc
+    except sqlite3.Error as er:
+        print('Ошибка в show_day_spending', er)
+    finally:
+        if db:
+            db.close()

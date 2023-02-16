@@ -10,7 +10,7 @@ from lexicon import RU_LEXICON
 from database import create_users_db, create_wallets_db, create_descriptions_db,\
                     add_user_in_db, add_wallet_in_db, add_description_in_db, update_wallet,\
                     check_user_in_db, check_wallet_in_db, check_description_in_db,\
-                    show_lust_spending, show_month_spending, show_year_spending
+                    show_lust_spending, show_month_spending, show_year_spending, show_day_spending
 
 
 async def process_start_command(message: Message):
@@ -99,9 +99,21 @@ async def process_total_show(message: Message):
         await message.answer(text=f'Total: {spending}р')
     elif len(answer) == 2:
         year = int(answer[1])
-        month = calendar.month_name[(int(answer[0]))].lower()
+        month = calendar.month_name[int(answer[0])].lower()
         spending = show_month_spending(tg_id, year, month)
         await message.answer(text=f'Сделано записей: {spending[0]}.\nВсего затрат за месяц: {spending[1]}р.')
+    elif len(answer) == 3:
+        year = int(answer[2])
+        month = calendar.month_name[int(answer[1])].lower()
+        day = int(answer[0])
+        spending = show_day_spending(tg_id, year, month, day)
+        if spending:
+            string = ''
+            for cost, desc in spending:
+                string += str(cost) + ' ' + desc + '\n'
+            await message.answer(text=f'Ваши записи:\n{string}')
+        else:
+            await message.answer(text='Нет записей за этот день.')
 
 
 def register_user_handlers(dp: Dispatcher):
