@@ -17,14 +17,15 @@ def show_lust_spending(tg_id: int, year: int) -> int:
             db.close()
 
 
-def show_month_spending(tg_id: int, year: int, month: str) -> int:
+def show_month_spending(tg_id: int, year: int, month: str) -> tuple:
     try:
         db = sqlite3.connect(r"database/spending_history.db")
         cur = db.cursor()
 
-        result = cur.execute(f"SELECT {month} FROM wallets WHERE user_tg_id=? AND year=?", (tg_id, year)).fetchone()
+        total: int = cur.execute(f"SELECT {month} FROM wallets WHERE user_tg_id=? AND year=?", (tg_id, year)).fetchone()[0]
+        cost_with_desc: int = len(cur.execute("SELECT cost, description FROM descriptions WHERE year=? AND month=? AND user_tg_id=?", (year, month, tg_id)).fetchall())
 
-        return result[0]
+        return cost_with_desc, total
     except sqlite3.Error as er:
         print('Ошибка в show_month_spending', er)
     finally:

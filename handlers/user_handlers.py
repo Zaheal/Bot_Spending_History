@@ -1,7 +1,7 @@
 from datetime import datetime
 import calendar
 
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, ReplyKeyboardRemove
 from aiogram.dispatcher.filters import Text, Command
 from aiogram import Dispatcher
 
@@ -36,7 +36,6 @@ async def process_create_user_command(message: Message):
 async def process_create_spending_command(message: Message):
     date = datetime.now()
     year = date.year
-    month = calendar.month_name[date.month].lower()
     tg_id = message.from_user.id
     if check_user_in_db(tg_id):
         if not check_wallet_in_db(tg_id):
@@ -66,7 +65,8 @@ async def add_spending(message: Message):
             
 
 async def process_spending_menu_command(message: Message):
-    if check_user_in_db(tg_id=message.from_user.id) and check_wallet_in_db(tg_id=message.from_user.id):
+    tg_id = message.from_user.id
+    if check_user_in_db(tg_id) and check_wallet_in_db(tg_id) and check_description_in_db(tg_id):
         await message.answer('За какой период вы хотите посмотреть свои расходы?', reply_markup=create_spending_menu_kb())
     else:
         await message.answer(RU_LEXICON['not_user_or_wallet'])
@@ -74,21 +74,34 @@ async def process_spending_menu_command(message: Message):
 
 async def process_period_press(callback: CallbackQuery):
     tg_id = callback.from_user.id
-    date = datetime.now()
-    year = date.year
+    year = datetime.now().year
     if callback.data.startswith('lust'):
         spending = show_lust_spending(tg_id, year)
         await callback.message.edit_text(text=f'Твоя последняя запись: {spending}р', reply_markup=create_spending_menu_kb())
         await callback.answer()
+    elif callback.data.startswith('year'):
+        await callback.message.answer(text=RU_LEXICON['chosen_year'])
+        await callback.answer()
     elif callback.data.startswith('month'):
-        month = calendar.month_name[date.month].lower()
+        await callback.message.answer(text=RU_LEXICON['chosen_month'])
+        await callback.answer()
+    elif callback.data.startswith('day'):
+        await callback.message.answer(text=RU_LEXICON['chosen_day'])
+        await callback.answer()
+    # Добавить FMS
+
+
+async def process_total_show(message: Message):
+    answer = message.text.split('.')
+    tg_id = message.from_user.id
+    if len(answer) == 1:
+        spending = show_year_spending(tg_id, int(answer[0]))
+        await message.answer(text=f'Total: {spending}р')
+    elif len(answer) == 2:
+        year = int(answer[1])
+        month = calendar.month_name[(int(answer[0]))].lower()
         spending = show_month_spending(tg_id, year, month)
-        await callback.message.edit_text(text=f'Потрачено за этот месяц: {spending}р', reply_markup=create_spending_menu_kb())
-        await callback.answer()
-    else:
-        spending = show_year_spending(tg_id, year)
-        await callback.message.edit_text(text=f'Потрачено за этот год: {spending}р', reply_markup=create_spending_menu_kb())
-        await callback.answer()
+        await message.answer(text=f'Сделано записей: {spending[0]}.\nВсего затрат за месяц: {spending[1]}р.')
 
 
 def register_user_handlers(dp: Dispatcher):
@@ -96,7 +109,7 @@ def register_user_handlers(dp: Dispatcher):
     dp.register_message_handler(process_help_command, Command(commands=['help']))
     dp.register_message_handler(process_create_user_command, Command(commands=['create_user']))
     dp.register_message_handler(process_create_spending_command, Command(commands=['create_spending']))
-    dp.register_message_handler(add_spending, lambda message: message.text.split(' ', 1)[0].isdigit())
+    dp.register_message_handler(add_spending, lambda message: len(message.text.split(' ')) == 2)
     dp.register_message_handler(process_spending_menu_command, Command(commands=['spending_menu']))
     dp.register_callback_query_handler(process_period_press, Text(endswith='period'))
-    
+    dp.register_message_handler(process_total_show, lambda message: message.text.split('.', 1)[0].isdigit())
