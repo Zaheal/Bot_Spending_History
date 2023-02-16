@@ -33,6 +33,22 @@ def add_wallet_in_db(tg_id: int, year: int):
             db.close()
 
 
+def add_description_in_db(tg_id: int, year: int, month: str, day: int, spent_money: int, description: str):
+    try:
+        db = sqlite3.connect(r"database/spending_history.db")
+        cur = db.cursor()
+
+        cur.execute("INSERT INTO descriptions (year, month, day, cost, description, user_tg_id) VALUES (?, ?, ?, ?, ?, ?)", (year, month, day, spent_money, description, tg_id))
+
+        db.commit()
+        db.close()
+    except sqlite3.Error as er:
+        print('Ошибка в add_description_in_db:', er)
+    finally:
+        if db:
+            db.close()
+
+
 def update_wallet(tg_id: int, year: int, month: str, spent_money: int):
     try:
         db = sqlite3.connect(r"database/spending_history.db")
