@@ -4,7 +4,6 @@ import calendar
 from aiogram.types import Message, CallbackQuery
 from aiogram.dispatcher.filters import Text, Command
 from aiogram import Dispatcher
-from aiogram.utils.exceptions import MessageNotModified
 
 from keyboards import create_spending_menu_kb
 from lexicon import RU_LEXICON
@@ -45,7 +44,7 @@ async def add_spending(message: Message):
     year = date.year
     if check_user_in_db(tg_id) and check_wallet_in_db(tg_id, year):
         month = calendar.month_name[date.month].lower()
-        spent_money = int(message.text)
+        spent_money = int(message.text.split(' ', 1))
 
         update_wallet(tg_id, year, month, spent_money)
         await message.answer(RU_LEXICON['created_spending']) # Обнови lexicon
