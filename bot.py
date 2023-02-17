@@ -2,9 +2,10 @@ import logging
 import asyncio
 
 from aiogram import Bot, Dispatcher
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 from configs import load_config, Config
-from handlers import register_user_handlers
+from handlers import register_user_handlers, register_other_handlers
 
 
 logger = logging.getLogger(__name__)
@@ -12,6 +13,7 @@ logger = logging.getLogger(__name__)
 
 def register_all_handlers(dp: Dispatcher):
     register_user_handlers(dp)
+    register_other_handlers(dp)
 
 
 async def main():
@@ -25,7 +27,7 @@ async def main():
     config: Config = load_config('.env')
 
     bot: Bot = Bot(config.token)
-    dp: Dispatcher = Dispatcher(bot)
+    dp: Dispatcher = Dispatcher(bot, storage=MemoryStorage())
 
     register_all_handlers(dp)
 
